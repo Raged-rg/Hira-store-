@@ -440,37 +440,59 @@ header {
   .hero h2 { font-size: 38px !important; margin-bottom: 5px !important; }
   .hero p { font-size: 16px !important; color: #555 !important; }
 
-  /* 3. Product Cards - Adaptive Density (2 Per Row) */
+  /* Container & Layout Fixes */
+  .container { padding: 0 15px; }
+
+  /* 3. Product Cards - High-End Minimal Grid */
   .grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-bottom: 40px;
-    padding: 0 10px;
+    gap: 15px; /* Clean, breathable spacing */
+    margin-bottom: 50px;
+    padding: 0; /* Remove extra padding to balance margins */
   }
-  .product-image-container { height: 230px; }
-  .product-info { padding: 12px 6px; }
   
+  .product-card {
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Increase image size for more focus */
+  .product-image-container { height: 260px; border-radius: 8px 8px 0 0; }
+  
+  .product-info { padding: 12px 8px; }
+  
+  /* Typography Hierarchy */
   .product-info h3 { 
-    font-size: 13px; 
-    margin-bottom: 4px; 
-    white-space: nowrap; 
-    overflow: hidden; 
-    text-overflow: ellipsis;
-    font-weight: 600;
+    font-size: 13px; font-weight: 500; color: #222;
+    margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .product-price { font-size: 13px; margin-bottom: 10px; letter-spacing: 0.5px; }
+  .product-price { font-size: 14px; font-weight: 700; color: var(--matte-gold); margin-bottom: 12px; }
   
-  .size-selector { gap: 4px; margin-bottom: 12px; }
-  .size-selector button { width: 24px; height: 24px; font-size: 11px; }
+  /* Size Selector (Clean Circular Design) */
+  .size-selector { gap: 6px; margin-bottom: 12px; }
+  .size-selector button { 
+    width: 28px; height: 28px; font-size: 11px; 
+    border: 1px solid #ddd; background: #fff; border-radius: 50%; color: #333;
+    transition: all 0.2s ease;
+  }
+  .size-selector button.selected {
+    background: var(--black); color: #fff; border-color: var(--black);
+  }
   
-  .favorite-btn { width: 32px; height: 32px; font-size: 14px; top: 8px; right: 8px; }
+  .favorite-btn { width: 30px; height: 30px; font-size: 13px; top: 10px; right: 10px; }
   
+  /* Dual-Style Buttons with Tap Animation */
   .btn-primary, .btn-secondary {
-    padding: 8px 0;
+    padding: 10px 0;
     font-size: 12px;
-    margin-top: 4px;
-    border-radius: 20px;
+    margin-top: 5px;
+    border-radius: 25px;
+    transition: transform 0.1s ease;
   }
+  .btn-primary:active, .btn-secondary:active { transform: scale(0.96); }
+  
+  .btn-primary { background-color: var(--matte-gold); color: #fff; border: none; }
+  .btn-secondary { background-color: var(--black); color: #fff; border: 1px solid var(--black); }
 
   /* 4. Product Details Optimization */
   .product-detail-container { padding: 15px; flex-direction: column; gap: 20px; }

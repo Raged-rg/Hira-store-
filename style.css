@@ -1,6 +1,7 @@
 /* Base and Reset */
 :root {
   --matte-gold: #C6A86B;
+  --soft-rose: #CFA69D;
   --black: #000000;
   --beige: #E8DCCB;
   --taupe: #D6C2A8;
@@ -10,7 +11,7 @@
   --font-english: 'Playfair Display', serif;
   
   --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.05);
-  --shadow-hover: 0 15px 40px rgba(0, 0, 0, 0.08);
+  --shadow-hover: 0 15px 40px rgba(0, 0, 0, 0.06);
   --transition-fast: 0.3s ease;
   --border-radius: 12px;
 }
@@ -181,6 +182,17 @@ header {
 }
 
 /* Product Grid */
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes heartPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -195,9 +207,10 @@ header {
   box-shadow: var(--shadow-soft);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
   position: relative;
+  animation: fadeInScale 0.6s ease-out backwards;
 }
 .product-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-hover);
 }
 
@@ -228,16 +241,19 @@ header {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--light-grey);
+  color: #a0a0a0;
   font-size: 20px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   z-index: 10;
+  transition: all var(--transition-fast);
 }
 .favorite-btn.active {
-  color: red;
+  color: var(--soft-rose);
+  animation: heartPulse 0.3s ease-in-out;
 }
 .favorite-btn:hover {
-  transform: scale(1.1);
+  color: var(--soft-rose);
+  transform: scale(1.05);
 }
 
 .product-info {
@@ -270,44 +286,51 @@ header {
   border: 1px solid var(--light-grey);
   font-family: var(--font-english);
   color: #333;
+  transition: all var(--transition-fast);
 }
 .size-selector button:hover {
   border-color: var(--matte-gold);
+  background-color: var(--ivory);
 }
 .size-selector button.selected {
-  background: var(--black);
-  color: #fff;
-  border-color: var(--black);
+  background: var(--beige);
+  color: var(--black);
+  border-color: var(--matte-gold);
+  box-shadow: 0 0 8px rgba(198, 168, 107, 0.3);
 }
 
 .btn-primary {
   display: inline-block;
-  background: var(--black);
+  background: var(--matte-gold);
   color: #fff;
   padding: 12px 30px;
   border-radius: 30px;
   font-size: 16px;
   font-weight: 500;
   width: 100%;
+  transition: all var(--transition-fast);
 }
 .btn-primary:hover {
-  background: var(--matte-gold);
+  background: #b8995a;
+  transform: scale(1.02);
+  box-shadow: 0 4px 15px rgba(198, 168, 107, 0.4);
 }
 .btn-secondary {
   display: inline-block;
-  background: transparent;
+  background: #fff;
   color: var(--black);
-  border: 1px solid var(--black);
+  border: 1px solid var(--taupe);
   padding: 12px 30px;
   border-radius: 30px;
   font-size: 16px;
   font-weight: 500;
   margin-top: 10px;
   width: 100%;
+  transition: all var(--transition-fast);
 }
 .btn-secondary:hover {
-  background: var(--black);
-  color: #fff;
+  background: var(--ivory);
+  border-color: var(--matte-gold);
 }
 
 /* Product Detail Page */
@@ -472,11 +495,6 @@ header {
   .size-selector { gap: 6px; margin-bottom: 12px; }
   .size-selector button { 
     width: 28px; height: 28px; font-size: 11px; 
-    border: 1px solid #ddd; background: #fff; border-radius: 50%; color: #333;
-    transition: all 0.2s ease;
-  }
-  .size-selector button.selected {
-    background: var(--black); color: #fff; border-color: var(--black);
   }
   
   .favorite-btn { width: 30px; height: 30px; font-size: 13px; top: 10px; right: 10px; }
@@ -487,12 +505,8 @@ header {
     font-size: 12px;
     margin-top: 5px;
     border-radius: 25px;
-    transition: transform 0.1s ease;
   }
   .btn-primary:active, .btn-secondary:active { transform: scale(0.96); }
-  
-  .btn-primary { background-color: var(--matte-gold); color: #fff; border: none; }
-  .btn-secondary { background-color: var(--black); color: #fff; border: 1px solid var(--black); }
 
   /* 4. Product Details Optimization */
   .product-detail-container { padding: 15px; flex-direction: column; gap: 20px; }

@@ -3,6 +3,7 @@ let favorites = JSON.parse(localStorage.getItem('hira_favorites')) || [];
 
 document.addEventListener('DOMContentLoaded', () => {
     initPage();
+    setupMobileScrollHeader();
 });
 
 function initPage() {
@@ -17,6 +18,34 @@ function initPage() {
         renderProducts(hiraProducts);
         setupSearch();
     }
+}
+
+// --- High-End Mobile UX: Smart Header Scroll ---
+function setupMobileScrollHeader() {
+    let lastScrollY = window.scrollY;
+    const header = document.querySelector('header');
+
+    if (!header) return;
+
+    window.addEventListener('scroll', () => {
+        // Only apply on mobile screens
+        if (window.innerWidth <= 768) {
+            const currentScrollY = window.scrollY;
+            
+            // If scrolling down aggressively, hide header
+            if (currentScrollY > lastScrollY && currentScrollY > 100) {
+                header.classList.add('hide-on-scroll');
+            } 
+            // If scrolling up, immediately reveal it
+            else if (currentScrollY < lastScrollY) {
+                header.classList.remove('hide-on-scroll');
+            }
+            lastScrollY = currentScrollY;
+        } else {
+            // Guarantee visible on desktop
+            header.classList.remove('hide-on-scroll');
+        }
+    }, { passive: true });
 }
 
 // --- Home Page Functions ---

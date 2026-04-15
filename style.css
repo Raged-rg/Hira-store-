@@ -399,32 +399,93 @@ header {
   padding: 40px;
 }
 
-/* Responsive */
+/* Responsive & Mobile UX Redesign (High-End Luxury Feel) */
 @media (max-width: 768px) {
+  /* 1. Mobile Header Redesign */
   header {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    padding: 15px 20px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    padding: 10px 20px;
+    gap: 10px;
+    align-items: center;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .header-right, .header-center, .header-left {
-    justify-content: center;
-    width: 100%;
+  header.hide-on-scroll {
+    transform: translateY(-100%);
+    box-shadow: none;
   }
-  .search-container {
-    width: 100%;
+  
+  .header-right { justify-content: flex-start; }
+  .header-center { justify-content: center; }
+  .header-left { justify-content: flex-end; }
+  
+  .header-right img { max-height: 48px !important; }
+  .logo h1 { font-size: 18px; margin: 0; }
+  .logo h1 span { font-size: 16px; margin: 0 5px; }
+
+  /* Minimal Luxury Search */
+  .search-container { width: 130px; }
+  .search-container input {
+    padding: 6px 12px;
+    padding-right: 28px;
+    font-size: 12px;
+    border-color: transparent;
+    background-color: #f7f7f7;
+    border-radius: 20px;
   }
-  .hero h2 {
-    font-size: 36px;
+  .search-container i { font-size: 13px; right: 10px; color: #666; }
+
+  /* 2. Hero Section Refinements */
+  .hero { height: 260px; margin-bottom: 30px; }
+  .hero h2 { font-size: 38px !important; margin-bottom: 5px !important; }
+  .hero p { font-size: 16px !important; color: #555 !important; }
+
+  /* 3. Product Cards - Adaptive Density (2 Per Row) */
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 40px;
+    padding: 0 10px;
   }
-  .product-detail-container {
-    flex-direction: column;
-    padding: 30px 20px;
+  .product-image-container { height: 230px; }
+  .product-info { padding: 12px 6px; }
+  
+  .product-info h3 { 
+    font-size: 13px; 
+    margin-bottom: 4px; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis;
+    font-weight: 600;
   }
-  .product-detail-image, .product-detail-info {
-    width: 100%;
+  .product-price { font-size: 13px; margin-bottom: 10px; letter-spacing: 0.5px; }
+  
+  .size-selector { gap: 4px; margin-bottom: 12px; }
+  .size-selector button { width: 24px; height: 24px; font-size: 11px; }
+  
+  .favorite-btn { width: 32px; height: 32px; font-size: 14px; top: 8px; right: 8px; }
+  
+  .btn-primary, .btn-secondary {
+    padding: 8px 0;
+    font-size: 12px;
+    margin-top: 4px;
+    border-radius: 20px;
   }
-  .product-detail-info h1 {
-    font-size: 28px;
-  }
+
+  /* 4. Product Details Optimization */
+  .product-detail-container { padding: 15px; flex-direction: column; gap: 20px; }
+  .product-detail-image, .product-detail-info { width: 100%; }
+  .product-detail-image { min-height: 400px; }
+  .product-detail-image img { min-height: 400px; border-radius: 8px; }
+  
+  .product-detail-info { padding: 10px 0; }
+  .product-detail-info h1 { font-size: 22px; margin-bottom: 8px; }
+  .product-detail-info .price { font-size: 18px; margin-bottom: 15px; }
+  .product-detail-info .description { font-size: 14px; margin-bottom: 25px; line-height: 1.6; }
+  
+  .size-label { font-size: 14px; margin-bottom: 10px; }
+  .product-detail-info .size-selector { justify-content: space-between; overflow-x: auto; gap: 8px; padding-bottom: 5px; }
+  #detail-size-selector button { flex-shrink: 0; width: 40px; height: 40px; font-size: 13px; }
+  
+  .btn-whatsapp { width: 100%; font-size: 15px; padding: 14px; border-radius: 25px; }
 }

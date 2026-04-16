@@ -55,6 +55,79 @@
         <div id="product-grid" class="grid"></div>
     </main>
 
+    <!-- Lightbox Product Modal -->
+    <div id="product-modal-overlay" class="modal-overlay" onclick="closeProductModal(event)">
+        <div class="modal-content product-modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeProductModal()"><i class="fa fa-times"></i></button>
+            <div id="product-modal-body">
+                <!-- Content injected dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Form Modal -->
+    <div id="order-form-overlay" class="modal-overlay" onclick="closeOrderForm(event)">
+        <div class="modal-content order-modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeOrderForm()"><i class="fa fa-times"></i></button>
+            
+            <div id="order-form-container">
+                <h2 style="font-family: var(--font-arabic); text-align: center; margin-bottom: 20px; font-size: 24px;">إكمال الطلب</h2>
+                <div class="order-summary" id="order-summary-panel">
+                    <!-- details injected here -->
+                </div>
+                
+                <form id="checkout-form" onsubmit="submitOrder(event)">
+                    <div class="form-group">
+                        <label>الاسم الكامل <span style="color:red">*</span></label>
+                        <input type="text" id="order-name" placeholder="أدخل اسمك الكامل" required>
+                    </div>
+                    <div class="form-group">
+                        <label>رقم الهاتف <span style="color:red">*</span></label>
+                        <input type="tel" id="order-phone" placeholder="مثال: 078xxxxxxx" required>
+                    </div>
+                    <div class="form-group">
+                        <label>المحافظة <span style="color:red">*</span></label>
+                        <select id="order-gov" required>
+                            <option value="">اختر المحافظة...</option>
+                            <option value="بغداد">بغداد</option>
+                            <option value="البصرة">البصرة</option>
+                            <option value="نينوى">نينوى</option>
+                            <option value="أربيل">أربيل</option>
+                            <option value="النجف">النجف</option>
+                            <option value="كربلاء">كربلاء</option>
+                            <option value="كركوك">كركوك</option>
+                            <option value="الأنبار">الأنبار</option>
+                            <option value="ديالى">ديالى</option>
+                            <option value="بابل">بابل</option>
+                            <option value="ميسان">ميسان</option>
+                            <option value="ذي قار">ذي قار</option>
+                            <option value="الديوانية">الديوانية</option>
+                            <option value="المثنى">المثنى</option>
+                            <option value="واسط">واسط</option>
+                            <option value="السليمانية">السليمانية</option>
+                            <option value="دهوك">دهوك</option>
+                            <option value="حلبجة">حلبجة</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>العنوان التفصيلي <span style="color:red">*</span></label>
+                        <input type="text" id="order-address" placeholder="المنطقة، المحلة، الزقاق، الدار..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>أقرب نقطة دالة <span style="color:red">*</span></label>
+                        <input type="text" id="order-landmark" placeholder="مثال: قرب مدرسة، أو جامع، أو مطعم..." required>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary" style="margin-top: 15px;">تأكيد الطلب</button>
+                    <!-- Success indicator hidden by default -->
+                    <div id="order-success-msg" style="display: none; color: #25D366; text-align: center; margin-top: 15px; font-weight: bold; font-size: 16px;">
+                        <i class="fa fa-check-circle"></i> تم تسجيل طلبك بنجاح! جاري تحويلك...
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Local Database -->
     <script src="data.js"></script>
     <script src="script.js"></script>

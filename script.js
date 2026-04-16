@@ -1,10 +1,12 @@
 const phoneNumber = '9647842272224';
 let favorites = JSON.parse(localStorage.getItem('hira_favorites')) || [];
+let hira_cart = JSON.parse(localStorage.getItem('hira_cart')) || [];
 
 document.addEventListener('DOMContentLoaded', () => {
     injectModals();
     initPage();
     setupMobileScrollHeader();
+    updateCartCounter();
 });
 
 function initPage() {
@@ -29,21 +31,15 @@ function setupMobileScrollHeader() {
     if (!header) return;
 
     window.addEventListener('scroll', () => {
-        // Only apply on mobile screens
         if (window.innerWidth <= 768) {
             const currentScrollY = window.scrollY;
-            
-            // If scrolling down aggressively, hide header
             if (currentScrollY > lastScrollY && currentScrollY > 100) {
                 header.classList.add('hide-on-scroll');
-            } 
-            // If scrolling up, immediately reveal it
-            else if (currentScrollY < lastScrollY) {
+            } else if (currentScrollY < lastScrollY) {
                 header.classList.remove('hide-on-scroll');
             }
             lastScrollY = currentScrollY;
         } else {
-            // Guarantee visible on desktop
             header.classList.remove('hide-on-scroll');
         }
     }, { passive: true });
@@ -84,7 +80,7 @@ function renderProducts(productsToRender) {
                     <button type="button" onclick="selectSize(event, this)">58</button>
                     <button type="button" onclick="selectSize(event, this)">60</button>
                 </div>
-                <button class="btn-primary" onclick="proceedToCheckout(event, '${product.id}', '${product.name}', '${product.price}', '${product.image}')">اطلب الآن</button>
+                <button class="btn-primary" onclick="addToCart(event, '${product.id}', '${product.name}', '${product.price}', '${product.image}')">أضف إلى السلة</button>
                 <a href="product.html?id=${product.id}" class="btn-secondary">التفاصيل</a>
             </div>
         `;
@@ -135,8 +131,8 @@ function renderProductDetail(productId) {
             </div>
             <div class="size-guide-text" style="font-size: 13px; color: #888; text-align: center; margin-bottom: 20px;">القياسات بالأرقام وتمثل طول العباية بالسنتيمتر</div>
             
-            <button class="btn-primary" onclick="checkoutDetail('${product.id}', '${product.name}', '${product.price}', '${product.image}')">
-                اطلب الآن
+            <button class="btn-primary" onclick="addToCartDetail('${product.id}', '${product.name}', '${product.price}', '${product.image}')">
+                أضف إلى السلة
             </button>
         </div>
     `;
@@ -152,12 +148,14 @@ function selectSizeDetail(btnElement) {
     selectedDetailSize = btnElement.innerText;
 }
 
-function checkoutDetail(id, name, price, image) {
+function addToCartDetail(id, name, price, image) {
     if (!selectedDetailSize) {
         alert("الرجاء اختيار المقاس أولاً.");
         return;
     }
-    openOrderForm(id, name, price, selectedDetailSize, image);
+    
+    const size = selectedDetailSize;
+    pushToCart(id, name, price, size, image);
 }
 
 // --- Shared Functions ---
@@ -172,25 +170,45 @@ function selectSize(event, btnElement) {
     btnElement.classList.add('selected');
 }
 
-function proceedToCheckout(event, id, name, price, image) {
-    event.stopPropagation();
+function addToCart(event, id, name, price, image) {
+    if (event) event.stopPropagation();
 
-    const selectorContainer = event.target.parentElement.querySelector('.size-selector');
-    const selectedBtn = selectorContainer.querySelector('.selected');
+    const selectorContainer = event ? event.target.parentElement.querySelector('.size-selector') : null;
+    let size = null;
+    
+    if (selectorContainer) {
+         const selectedBtn = selectorContainer.querySelector('.selected');
+         if (selectedBtn) size = selectedBtn.innerText;
+    } else if (document.getElementById('modal-size-selector')) {
+         const selectedBtn = document.getElementById('modal-size-selector').querySelector('.selected');
+         if (selectedBtn) size = selectedBtn.innerText;
+    }
 
-    if (!selectedBtn) {
+    if (!size) {
         alert("الرجاء اختيار المقاس أولاً.");
         return;
     }
-    const size = selectedBtn.innerText;
-    openOrderForm(id, name, price, size, image);
+
+    pushToCart(id, name, price, size, image);
+    
+    // Close modal if triggered from Product Lightbox modal
+    if(document.getElementById('product-modal-overlay') && document.getElementById('product-modal-overlay').classList.contains('active')) {
+        closeProductModal();
+    }
 }
 
-function sendWhatsApp(name, price, size) {
-    const message = `مرحباً، أود طلب المنتج التالي:\n\nالاسم: ${name}\nالسعر: ${price}\nالمقاس: ${size}`;
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
+function pushToCart(id, name, price, size, image) {
+    const parsedPrice = parseInt(price) || 0;
+    const existing = hira_cart.find(i => i.id === id && i.size === size);
+    
+    if (existing) {
+        existing.quantity += 1;
+    } else {
+        hira_cart.push({ id, name, price: parsedPrice, size, image, quantity: 1 });
+    }
+    
+    saveCart();
+    alert("تمت الإضافة إلى السلة بنجاح!");
 }
 
 function toggleFavorite(event, id, btnElement) {
@@ -214,12 +232,134 @@ function toggleFavorite(event, id, btnElement) {
     localStorage.setItem('hira_favorites', JSON.stringify(favorites));
 }
 
-// --- Modals & Order Form Logic ---
+// --- Cart Core System --- //
+
+function updateCartCounter() {
+    const badges = document.querySelectorAll('.cart-badge');
+    const count = hira_cart.reduce((sum, item) => sum + item.quantity, 0);
+    badges.forEach(b => b.innerText = count);
+}
+
+function saveCart() {
+    localStorage.setItem('hira_cart', JSON.stringify(hira_cart));
+    updateCartCounter();
+}
+
+function openCartModal() {
+    renderCartItems();
+    document.getElementById('cart-modal-overlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeCartModal(event) {
+    if (event && event.target !== event.currentTarget && !event.target.classList.contains('modal-close')) return;
+    const modal = document.getElementById('cart-modal-overlay');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+function renderCartItems() {
+    const container = document.getElementById('cart-items');
+    const totalEl = document.getElementById('cart-total-price');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (hira_cart.length === 0) {
+        container.innerHTML = '<div class="empty-cart-msg">السلة فارغة حالياً</div>';
+        totalEl.innerText = '0 د.ع';
+        return;
+    }
+
+    let total = 0;
+    hira_cart.forEach((item, index) => {
+        total += item.price * item.quantity;
+        container.innerHTML += `
+            <div class="cart-item">
+                <img src="${item.image}" class="cart-item-img">
+                <div class="cart-item-details">
+                    <div class="cart-item-title">${item.name}</div>
+                    <div class="cart-item-price">${item.price} د.ع</div>
+                    <div class="cart-item-size">المقاس: ${item.size}</div>
+                </div>
+                <div class="cart-item-actions">
+                    <button class="remove-cart-item" onclick="removeFromCart(${index})"><i class="fa fa-trash"></i></button>
+                    <div class="quantity-controls">
+                        <button onclick="updateQuantity(${index}, 1)">+</button>
+                        <span>${item.quantity}</span>
+                        <button onclick="updateQuantity(${index}, -1)">-</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    totalEl.innerText = total + ' د.ع';
+}
+
+function updateQuantity(index, change) {
+    hira_cart[index].quantity += change;
+    if (hira_cart[index].quantity <= 0) {
+        hira_cart.splice(index, 1);
+    }
+    saveCart();
+    renderCartItems();
+}
+
+function removeFromCart(index) {
+    hira_cart.splice(index, 1);
+    saveCart();
+    renderCartItems();
+}
+
+function openCheckoutFromCart() {
+    if (hira_cart.length === 0) {
+        alert("السلة فارغة.");
+        return;
+    }
+    closeCartModal();
+    
+    const summaryPanel = document.getElementById('order-summary-panel');
+    if (summaryPanel) {
+        let total = hira_cart.reduce((s, i) => s + (i.price * i.quantity), 0);
+        let count = hira_cart.reduce((s, i) => s + i.quantity, 0);
+        summaryPanel.innerHTML = `
+            <div style="text-align: right; background: #fafafa; padding: 10px; border-radius: 8px;">
+                <strong>عدد المنتجات:</strong> ${count}<br>
+                <strong>المجموع الكلي:</strong> ${total} د.ع
+            </div>
+        `;
+    }
+    document.getElementById('order-form-overlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+// --- Modals & Checkout Flow --- //
 
 function injectModals() {
-    if (document.getElementById('product-modal-overlay')) return; // Already injected
+    if (document.getElementById('order-form-overlay')) return; // Already injected
     
     const modalsHTML = `
+    <!-- Cart Modal -->
+    <div id="cart-modal-overlay" class="modal-overlay" onclick="closeCartModal(event)">
+        <div class="cart-modal-content modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeCartModal()"><i class="fa fa-times"></i></button>
+            <h2 style="font-family: var(--font-arabic); margin-bottom: 20px; font-size: 24px; text-align: center;">سلة المشتريات</h2>
+            <div id="cart-items" class="cart-items-container">
+                <!-- items injected here -->
+            </div>
+            <div class="cart-summary">
+                <div class="cart-total-row">
+                    <span>المجموع:</span>
+                    <span id="cart-total-price">0 د.ع</span>
+                </div>
+                <button class="btn-primary" onclick="openCheckoutFromCart()" style="width: 100%; margin-bottom: 10px; padding: 14px;">إتمام الطلب</button>
+                <button class="btn-secondary" onclick="closeCartModal()" style="width: 100%; padding: 12px;">متابعة التسوق</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Lightbox Product Modal -->
     <div id="product-modal-overlay" class="modal-overlay" onclick="closeProductModal(event)">
         <div class="modal-content product-modal-content" onclick="event.stopPropagation()">
@@ -236,9 +376,9 @@ function injectModals() {
             <button class="modal-close" onclick="closeOrderForm()"><i class="fa fa-times"></i></button>
             
             <div id="order-form-container">
-                <h2 style="font-family: var(--font-arabic); text-align: center; margin-bottom: 20px; font-size: 24px;">إكمال الطلب</h2>
-                <div class="order-summary" id="order-summary-panel" style="text-align: center;">
-                    <!-- details injected here -->
+                <h2 style="font-family: var(--font-arabic); text-align: center; margin-bottom: 20px; font-size: 24px;">إتمام الطلب</h2>
+                <div class="order-summary" id="order-summary-panel">
+                    <!-- details injected here from cart -->
                 </div>
                 
                 <form id="checkout-form" onsubmit="submitOrder(event)">
@@ -283,10 +423,9 @@ function injectModals() {
                         <input type="text" id="order-landmark" placeholder="مثال: قرب مدرسة، أو جامع، أو مطعم..." required>
                     </div>
                     
-                    <button type="submit" class="btn-primary" style="margin-top: 15px;">تأكيد الطلب</button>
-                    <!-- Success indicator hidden by default -->
+                    <button type="submit" class="btn-primary" style="margin-top: 15px;">تأكيد وإرسال الطلب</button>
                     <div id="order-success-msg" style="display: none; color: #25D366; text-align: center; margin-top: 15px; font-weight: bold; font-size: 16px;">
-                        <i class="fa fa-check-circle"></i> تم تسجيل طلبك بنجاح! جاري تحويلك...
+                        <i class="fa fa-check-circle"></i> تم تأكيد طلبك! جاري تحويلك لواتساب...
                     </div>
                 </form>
             </div>
@@ -297,8 +436,6 @@ function injectModals() {
     container.innerHTML = modalsHTML;
     document.body.appendChild(container);
 }
-
-let currentOrderDetails = {};
 
 function openProductModal(productId) {
     const product = hiraProducts.find(p => p.id.toString() === productId.toString());
@@ -323,7 +460,7 @@ function openProductModal(productId) {
                 <button type="button" onclick="selectSize(event, this)">60</button>
             </div>
             <div class="size-guide-text" style="font-size: 13px; color: #888; text-align: center; margin-bottom: 20px;">القياسات بالأرقام وتمثل طول العباية بالسنتيمتر</div>
-            <button class="btn-primary" onclick="proceedFromModal(event, '${product.id}', '${product.name}', '${product.price}', '${product.image}')">اطلب الآن</button>
+            <button class="btn-primary" onclick="addToCart(event, '${product.id}', '${product.name}', '${product.price}', '${product.image}')">أضف إلى السلة</button>
         </div>
     `;
 
@@ -340,36 +477,6 @@ function closeProductModal(event) {
     }
 }
 
-function proceedFromModal(event, id, name, price, image) {
-    const selectorContainer = document.getElementById('modal-size-selector');
-    const selectedBtn = selectorContainer.querySelector('.selected');
-    if (!selectedBtn) {
-        alert("الرجاء اختيار المقاس أولاً.");
-        return;
-    }
-    const size = selectedBtn.innerText;
-    closeProductModal();
-    openOrderForm(id, name, price, size, image);
-}
-
-function openOrderForm(id, name, price, size, image = '') {
-    currentOrderDetails = { id, name, price, size, image };
-    const summaryPanel = document.getElementById('order-summary-panel');
-    if (summaryPanel) {
-        let imgHtml = image ? `<img src="${image}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;">` : '';
-        summaryPanel.innerHTML = `
-            ${imgHtml}
-            <div style="text-align: right;">
-                المنتج: <strong>${name}</strong><br>
-                المقاس: <strong>${size}</strong><br>
-                السعر: <strong>${price} د.ع</strong>
-            </div>
-        `;
-    }
-    document.getElementById('order-form-overlay').classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
 function closeOrderForm(event) {
     if (event && event.target !== event.currentTarget && !event.target.classList.contains('modal-close')) return;
     const modal = document.getElementById('order-form-overlay');
@@ -381,6 +488,11 @@ function closeOrderForm(event) {
 
 function submitOrder(event) {
     event.preventDefault();
+    
+    if (hira_cart.length === 0) {
+        alert("السلة فارغة. عد للتسوق أولاً.");
+        return;
+    }
     
     const name = document.getElementById('order-name').value;
     const phone = document.getElementById('order-phone').value;
@@ -398,40 +510,52 @@ function submitOrder(event) {
     if (btn) btn.disabled = true;
 
     setTimeout(() => {
-        sendWhatsAppDetailed(
-            currentOrderDetails.id,
-            currentOrderDetails.name, 
-            currentOrderDetails.price, 
-            currentOrderDetails.size, 
-            { name, phone, gov, address, landmark },
-            currentOrderDetails.image
-        );
-        closeOrderForm();
+        sendWhatsAppDetailed({ name, phone, gov, address, landmark });
         
+        // Clear Cart
+        hira_cart = [];
+        saveCart();
+        
+        closeOrderForm();
         document.getElementById('checkout-form').reset();
         document.getElementById('order-success-msg').style.display = 'none';
         if (btn) btn.disabled = false;
     }, 1500);
 }
 
-function sendWhatsAppDetailed(productId, productName, price, size, customerInfo, imagePath) {
-    // Dynamically generate the absolute URL for GitHub Pages
-    // This perfectly resolves the repository subfolder (e.g. username.github.io/repo/Images/1.jpg)
-    let imageLink = new URL(imagePath, window.location.href).href;
+function sendWhatsAppDetailed(customerInfo) {
+    let message = `طلب جديد:
 
-    const message = `طلب جديد:
-- اسم المنتج: ${productName}
-- السعر: ${price} د.ع
-- القياس المختار: ${size}
+🛍️ المنتجات:`;
+    
+    let totalItems = 0;
+    let totalPrice = 0;
 
-معلومات الزبون:
-- الاسم: ${customerInfo.name}
-- رقم الهاتف: ${customerInfo.phone}
-- المحافظة: ${customerInfo.gov}
-- العنوان: ${customerInfo.address} - ${customerInfo.landmark}
+    hira_cart.forEach(item => {
+        let imageLink = new URL(item.image, window.location.href).href;
+        message += `
+* ${item.name}
+  السعر: ${item.price} د.ع
+  القياس: ${item.size}
+  الكمية: ${item.quantity}
+  صورة:
+  ${imageLink}
+`;
+        totalItems += item.quantity;
+        totalPrice += item.price * item.quantity;
+    });
 
-صورة المنتج:
-${imageLink}`;
+    message += `
+📊 المجموع:
+عدد القطع: ${totalItems}
+السعر الكلي: ${totalPrice} د.ع
+
+👤 معلومات الزبون:
+* الاسم: ${customerInfo.name}
+* الهاتف: ${customerInfo.phone}
+* المحافظة: ${customerInfo.gov}
+* العنوان: ${customerInfo.address} - ${customerInfo.landmark}
+`;
 
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;

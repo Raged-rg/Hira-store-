@@ -67,7 +67,7 @@ function renderProducts(productsToRender) {
         const card = document.createElement('div');
         card.className = 'product-card';
         card.innerHTML = `
-            <div class="product-image-container">
+            <div class="product-image-container" onclick="openProductModal('${product.id}')" style="cursor:pointer">
                 <img src="${product.image}" alt="${product.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/400x600?text=لا+توجد+صورة'">
                 <button class="favorite-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, '${product.id}', this)">
                     <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
@@ -156,7 +156,7 @@ function checkoutDetail(name, price) {
         alert("الرجاء اختيار المقاس أولاً.");
         return;
     }
-    sendWhatsApp(name, price, selectedDetailSize);
+    openOrderForm(name, price, selectedDetailSize);
 }
 
 // --- Shared Functions ---
@@ -182,7 +182,7 @@ function proceedToCheckout(event, id, name, price) {
         return;
     }
     const size = selectedBtn.innerText;
-    sendWhatsApp(name, price, size);
+    openOrderForm(name, price, size);
 }
 
 function sendWhatsApp(name, price, size) {
@@ -213,3 +213,134 @@ function toggleFavorite(event, id, btnElement) {
     localStorage.setItem('hira_favorites', JSON.stringify(favorites));
 }
 
+// --- Modals & Order Form Logic ---
+
+let currentOrderDetails = {};
+
+function openProductModal(productId) {
+    const product = hiraProducts.find(p => p.id.toString() === productId.toString());
+    if (!product) return;
+
+    const modalBody = document.getElementById('product-modal-body');
+    if (!modalBody) return;
+    
+    modalBody.innerHTML = `
+        <div class="product-modal-image">
+           <img src="${product.image}" alt="${product.name}">
+        </div>
+        <div class="product-modal-info">
+            <h2>${product.name}</h2>
+            <div class="price">${product.price} د.ع</div>
+            <p class="desc">${product.description.replace(/\n/g, '<br>')}</p>
+            <div class="size-selector" id="modal-size-selector">
+                <button type="button" onclick="selectSize(event, this)">52</button>
+                <button type="button" onclick="selectSize(event, this)">54</button>
+                <button type="button" onclick="selectSize(event, this)">56</button>
+                <button type="button" onclick="selectSize(event, this)">58</button>
+                <button type="button" onclick="selectSize(event, this)">60</button>
+            </div>
+            <button class="btn-primary" onclick="proceedFromModal(event, '${product.name}', '${product.price}')">اطلب الآن</button>
+        </div>
+    `;
+
+    document.getElementById('product-modal-overlay').classList.add('active');
+    document.body.style.overflow = 'hidden'; 
+}
+
+function closeProductModal(event) {
+    if (event && event.target !== event.currentTarget && !event.target.classList.contains('modal-close')) return;
+    const modal = document.getElementById('product-modal-overlay');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+function proceedFromModal(event, name, price) {
+    const selectorContainer = document.getElementById('modal-size-selector');
+    const selectedBtn = selectorContainer.querySelector('.selected');
+    if (!selectedBtn) {
+        alert("الرجاء اختيار المقاس أولاً.");
+        return;
+    }
+    const size = selectedBtn.innerText;
+    closeProductModal();
+    openOrderForm(name, price, size);
+}
+
+function openOrderForm(name, price, size) {
+    currentOrderDetails = { name, price, size };
+    const summaryPanel = document.getElementById('order-summary-panel');
+    if (summaryPanel) {
+        summaryPanel.innerHTML = `
+            المنتج: <strong>${name}</strong><br>
+            المقاس: <strong>${size}</strong><br>
+            السعر: <strong>${price} د.ع</strong>
+        `;
+    }
+    document.getElementById('order-form-overlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeOrderForm(event) {
+    if (event && event.target !== event.currentTarget && !event.target.classList.contains('modal-close')) return;
+    const modal = document.getElementById('order-form-overlay');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+function submitOrder(event) {
+    event.preventDefault();
+    
+    const name = document.getElementById('order-name').value;
+    const phone = document.getElementById('order-phone').value;
+    const gov = document.getElementById('order-gov').value;
+    const address = document.getElementById('order-address').value;
+    const landmark = document.getElementById('order-landmark').value;
+
+    if (!name || !phone || !gov || !address || !landmark) {
+        alert("الرجاء ملء جميع الحقول المطلوبة.");
+        return;
+    }
+
+    document.getElementById('order-success-msg').style.display = 'block';
+    const btn = document.querySelector('#checkout-form button[type="submit"]');
+    if (btn) btn.disabled = true;
+
+    setTimeout(() => {
+        sendWhatsAppDetailed(
+            currentOrderDetails.name, 
+            currentOrderDetails.price, 
+            currentOrderDetails.size, 
+            { name, phone, gov, address, landmark }
+        );
+        closeOrderForm();
+        
+        document.getElementById('checkout-form').reset();
+        document.getElementById('order-success-msg').style.display = 'none';
+        if (btn) btn.disabled = false;
+    }, 1500);
+}
+
+function sendWhatsAppDetailed(productName, price, size, customerInfo) {
+    const message = `*طلب جديد من متجر حيرة* ✨
+    
+🛍️ *تفاصيل الطلب*
+المنتج: ${productName}
+السعر: ${price} د.ع
+المقاس: ${size}
+
+👤 *بيانات العميل*
+الاسم: ${customerInfo.name}
+الموبايل: ${customerInfo.phone}
+المحافظة: ${customerInfo.gov}
+العنوان: ${customerInfo.address}
+أقرب نقطة دالة: ${customerInfo.landmark}
+
+أرجو تأكيد الطلب، شكراً لكم!`;
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
+}

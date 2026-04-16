@@ -403,7 +403,8 @@ function submitOrder(event) {
             currentOrderDetails.name, 
             currentOrderDetails.price, 
             currentOrderDetails.size, 
-            { name, phone, gov, address, landmark }
+            { name, phone, gov, address, landmark },
+            currentOrderDetails.image
         );
         closeOrderForm();
         
@@ -413,14 +414,10 @@ function submitOrder(event) {
     }, 1500);
 }
 
-function sendWhatsAppDetailed(productId, productName, price, size, customerInfo) {
-    let baseUrl = window.location.origin;
-    // Generate the path to the image as required by the user
-    let imageLink = `https://yourdomain.com/images/${productId}.jpg`;
-    if (window.location.hostname !== '' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        // If domain is known, use real domain instead of placeholder
-        imageLink = `${baseUrl}/images/${productId}.jpg`;
-    }
+function sendWhatsAppDetailed(productId, productName, price, size, customerInfo, imagePath) {
+    // Dynamically generate the absolute URL for GitHub Pages
+    // This perfectly resolves the repository subfolder (e.g. username.github.io/repo/Images/1.jpg)
+    let imageLink = new URL(imagePath, window.location.href).href;
 
     const message = `طلب جديد:
 - اسم المنتج: ${productName}

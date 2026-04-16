@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initPage();
     setupMobileScrollHeader();
     updateCartCounter();
+    updateFavCounter();
 });
 
 function initPage() {
@@ -230,6 +231,102 @@ function toggleFavorite(event, id, btnElement) {
         icon.classList.add('fa-solid');
     }
     localStorage.setItem('hira_favorites', JSON.stringify(favorites));
+    updateFavCounter();
+}
+
+// --- Favorites System Core --- //
+
+function updateFavCounter() {
+    const badges = document.querySelectorAll('#fav-badge');
+    badges.forEach(b => b.innerText = favorites.length);
+}
+
+function openFavModal() {
+    renderFavItems();
+    document.getElementById('fav-modal-overlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeFavModal(event) {
+    if (event && event.target !== event.currentTarget && !event.target.classList.contains('modal-close')) return;
+    const modal = document.getElementById('fav-modal-overlay');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+function renderFavItems() {
+    const container = document.getElementById('fav-items');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (favorites.length === 0) {
+        container.innerHTML = '<div class="empty-cart-msg">لا توجد منتجات مفضلة حالياً</div>';
+        return;
+    }
+
+    favorites.forEach(id => {
+        const product = hiraProducts.find(p => p.id.toString() === id.toString());
+        if(!product) return;
+
+        container.innerHTML += `
+            <div class="cart-item" id="fav-row-${product.id}">
+                <img src="${product.image}" class="cart-item-img" onclick="closeFavModal(); setTimeout(() => openProductModal('${product.id}'), 100);" style="cursor:pointer;">
+                <div class="cart-item-details">
+                    <div class="cart-item-title">${product.name}</div>
+                    <div class="cart-item-price">${product.price} د.ع</div>
+                    <div class="fav-item-actions" style="margin-top: 10px;">
+                        <div class="fav-item-size-selector" id="fav-size-${product.id}">
+                            <button type="button" onclick="selectSize(event, this)">52</button>
+                            <button type="button" onclick="selectSize(event, this)">54</button>
+                            <button type="button" onclick="selectSize(event, this)">56</button>
+                            <button type="button" onclick="selectSize(event, this)">58</button>
+                            <button type="button" onclick="selectSize(event, this)">60</button>
+                        </div>
+                        <button class="btn-fav-add" onclick="addFromFav('${product.id}', '${product.name}', '${product.price}', '${product.image}')">أضف إلى السلة</button>
+                    </div>
+                </div>
+                <button class="remove-cart-item" onclick="removeFavoriteDirectly('${product.id}')" style="align-self: flex-start;"><i class="fa fa-times"></i></button>
+            </div>
+        `;
+    });
+}
+
+function addFromFav(id, name, price, image) {
+    const selectorContainer = document.getElementById(`fav-size-${id}`);
+    const selectedBtn = selectorContainer.querySelector('.selected');
+    
+    if (!selectedBtn) {
+        alert("الرجاء اختيار المقاس أولاً.");
+        return;
+    }
+    
+    const size = selectedBtn.innerText;
+    pushToCart(id, name, price, size, image);
+}
+
+function removeFavoriteDirectly(id) {
+    const index = favorites.indexOf(id.toString());
+    if (index > -1) {
+        favorites.splice(index, 1);
+        localStorage.setItem('hira_favorites', JSON.stringify(favorites));
+        updateFavCounter();
+        renderFavItems();
+        
+        // Try to re-render main view to keep hearts synced
+        try {
+            if (document.getElementById('product-grid')) {
+                const query = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
+                if (query) {
+                    renderProducts(hiraProducts.filter(p => p.name.toLowerCase().includes(query)));
+                } else {
+                    renderProducts(hiraProducts);
+                }
+            }
+        } catch(e) {}
+    }
 }
 
 // --- Cart Core System --- //
@@ -341,6 +438,20 @@ function injectModals() {
     if (document.getElementById('order-form-overlay')) return; // Already injected
     
     const modalsHTML = `
+    <!-- Favorites Modal -->
+    <div id="fav-modal-overlay" class="modal-overlay" onclick="closeFavModal(event)">
+        <div class="cart-modal-content modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeFavModal()"><i class="fa fa-times"></i></button>
+            <h2 style="font-family: var(--font-arabic); margin-bottom: 20px; font-size: 24px; text-align: center;">المفضلة ❤️</h2>
+            <div id="fav-items" class="cart-items-container">
+                <!-- fav items injected here -->
+            </div>
+            <div class="cart-summary">
+                <button class="btn-secondary" onclick="closeFavModal()" style="width: 100%; padding: 12px;">متابعة التسوق</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Cart Modal -->
     <div id="cart-modal-overlay" class="modal-overlay" onclick="closeCartModal(event)">
         <div class="cart-modal-content modal-content" onclick="event.stopPropagation()">

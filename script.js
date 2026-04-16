@@ -2,6 +2,7 @@ const phoneNumber = '9647842272224';
 let favorites = JSON.parse(localStorage.getItem('hira_favorites')) || [];
 
 document.addEventListener('DOMContentLoaded', () => {
+    injectModals();
     initPage();
     setupMobileScrollHeader();
 });
@@ -83,7 +84,7 @@ function renderProducts(productsToRender) {
                     <button type="button" onclick="selectSize(event, this)">58</button>
                     <button type="button" onclick="selectSize(event, this)">60</button>
                 </div>
-                <button class="btn-primary" onclick="proceedToCheckout(event, '${product.id}', '${product.name}', '${product.price}')">اطلب الآن</button>
+                <button class="btn-primary" onclick="proceedToCheckout(event, '${product.id}', '${product.name}', '${product.price}', '${product.image}')">اطلب الآن</button>
                 <a href="product.html?id=${product.id}" class="btn-secondary">التفاصيل</a>
             </div>
         `;
@@ -132,10 +133,10 @@ function renderProductDetail(productId) {
                 <button type="button" onclick="selectSizeDetail(this)">58</button>
                 <button type="button" onclick="selectSizeDetail(this)">60</button>
             </div>
+            <div class="size-guide-text" style="font-size: 13px; color: #888; text-align: center; margin-bottom: 20px;">القياسات بالأرقام وتمثل طول العباية بالسنتيمتر</div>
             
-            <button class="btn-whatsapp" onclick="checkoutDetail('${product.name}', '${product.price}')">
-                <i class="fa-brands fa-whatsapp"></i>
-                اطلب الآن عبر واتساب
+            <button class="btn-primary" onclick="checkoutDetail('${product.id}', '${product.name}', '${product.price}', '${product.image}')">
+                اطلب الآن
             </button>
         </div>
     `;
@@ -151,12 +152,12 @@ function selectSizeDetail(btnElement) {
     selectedDetailSize = btnElement.innerText;
 }
 
-function checkoutDetail(name, price) {
+function checkoutDetail(id, name, price, image) {
     if (!selectedDetailSize) {
         alert("الرجاء اختيار المقاس أولاً.");
         return;
     }
-    openOrderForm(name, price, selectedDetailSize);
+    openOrderForm(id, name, price, selectedDetailSize, image);
 }
 
 // --- Shared Functions ---
@@ -171,7 +172,7 @@ function selectSize(event, btnElement) {
     btnElement.classList.add('selected');
 }
 
-function proceedToCheckout(event, id, name, price) {
+function proceedToCheckout(event, id, name, price, image) {
     event.stopPropagation();
 
     const selectorContainer = event.target.parentElement.querySelector('.size-selector');
@@ -182,7 +183,7 @@ function proceedToCheckout(event, id, name, price) {
         return;
     }
     const size = selectedBtn.innerText;
-    openOrderForm(name, price, size);
+    openOrderForm(id, name, price, size, image);
 }
 
 function sendWhatsApp(name, price, size) {
@@ -215,6 +216,88 @@ function toggleFavorite(event, id, btnElement) {
 
 // --- Modals & Order Form Logic ---
 
+function injectModals() {
+    if (document.getElementById('product-modal-overlay')) return; // Already injected
+    
+    const modalsHTML = `
+    <!-- Lightbox Product Modal -->
+    <div id="product-modal-overlay" class="modal-overlay" onclick="closeProductModal(event)">
+        <div class="modal-content product-modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeProductModal()"><i class="fa fa-times"></i></button>
+            <div id="product-modal-body">
+                <!-- Content injected dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Form Modal -->
+    <div id="order-form-overlay" class="modal-overlay" onclick="closeOrderForm(event)">
+        <div class="modal-content order-modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeOrderForm()"><i class="fa fa-times"></i></button>
+            
+            <div id="order-form-container">
+                <h2 style="font-family: var(--font-arabic); text-align: center; margin-bottom: 20px; font-size: 24px;">إكمال الطلب</h2>
+                <div class="order-summary" id="order-summary-panel" style="text-align: center;">
+                    <!-- details injected here -->
+                </div>
+                
+                <form id="checkout-form" onsubmit="submitOrder(event)">
+                    <div class="form-group">
+                        <label>الاسم الكامل <span style="color:red">*</span></label>
+                        <input type="text" id="order-name" placeholder="أدخل اسمك الكامل" required>
+                    </div>
+                    <div class="form-group">
+                        <label>رقم الهاتف <span style="color:red">*</span></label>
+                        <input type="tel" id="order-phone" placeholder="مثال: 078xxxxxxx" required>
+                    </div>
+                    <div class="form-group">
+                        <label>المحافظة <span style="color:red">*</span></label>
+                        <select id="order-gov" required>
+                            <option value="">اختر المحافظة...</option>
+                            <option value="بغداد">بغداد</option>
+                            <option value="البصرة">البصرة</option>
+                            <option value="نينوى">نينوى</option>
+                            <option value="أربيل">أربيل</option>
+                            <option value="النجف">النجف</option>
+                            <option value="كربلاء">كربلاء</option>
+                            <option value="كركوك">كركوك</option>
+                            <option value="الأنبار">الأنبار</option>
+                            <option value="ديالى">ديالى</option>
+                            <option value="بابل">بابل</option>
+                            <option value="ميسان">ميسان</option>
+                            <option value="ذي قار">ذي قار</option>
+                            <option value="الديوانية">الديوانية</option>
+                            <option value="المثنى">المثنى</option>
+                            <option value="واسط">واسط</option>
+                            <option value="السليمانية">السليمانية</option>
+                            <option value="دهوك">دهوك</option>
+                            <option value="حلبجة">حلبجة</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>العنوان التفصيلي <span style="color:red">*</span></label>
+                        <input type="text" id="order-address" placeholder="المنطقة، المحلة، الزقاق، الدار..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>أقرب نقطة دالة <span style="color:red">*</span></label>
+                        <input type="text" id="order-landmark" placeholder="مثال: قرب مدرسة، أو جامع، أو مطعم..." required>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary" style="margin-top: 15px;">تأكيد الطلب</button>
+                    <!-- Success indicator hidden by default -->
+                    <div id="order-success-msg" style="display: none; color: #25D366; text-align: center; margin-top: 15px; font-weight: bold; font-size: 16px;">
+                        <i class="fa fa-check-circle"></i> تم تسجيل طلبك بنجاح! جاري تحويلك...
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    `;
+    const container = document.createElement('div');
+    container.innerHTML = modalsHTML;
+    document.body.appendChild(container);
+}
+
 let currentOrderDetails = {};
 
 function openProductModal(productId) {
@@ -239,7 +322,8 @@ function openProductModal(productId) {
                 <button type="button" onclick="selectSize(event, this)">58</button>
                 <button type="button" onclick="selectSize(event, this)">60</button>
             </div>
-            <button class="btn-primary" onclick="proceedFromModal(event, '${product.name}', '${product.price}')">اطلب الآن</button>
+            <div class="size-guide-text" style="font-size: 13px; color: #888; text-align: center; margin-bottom: 20px;">القياسات بالأرقام وتمثل طول العباية بالسنتيمتر</div>
+            <button class="btn-primary" onclick="proceedFromModal(event, '${product.id}', '${product.name}', '${product.price}', '${product.image}')">اطلب الآن</button>
         </div>
     `;
 
@@ -256,7 +340,7 @@ function closeProductModal(event) {
     }
 }
 
-function proceedFromModal(event, name, price) {
+function proceedFromModal(event, id, name, price, image) {
     const selectorContainer = document.getElementById('modal-size-selector');
     const selectedBtn = selectorContainer.querySelector('.selected');
     if (!selectedBtn) {
@@ -265,17 +349,21 @@ function proceedFromModal(event, name, price) {
     }
     const size = selectedBtn.innerText;
     closeProductModal();
-    openOrderForm(name, price, size);
+    openOrderForm(id, name, price, size, image);
 }
 
-function openOrderForm(name, price, size) {
-    currentOrderDetails = { name, price, size };
+function openOrderForm(id, name, price, size, image = '') {
+    currentOrderDetails = { id, name, price, size, image };
     const summaryPanel = document.getElementById('order-summary-panel');
     if (summaryPanel) {
+        let imgHtml = image ? `<img src="${image}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;">` : '';
         summaryPanel.innerHTML = `
-            المنتج: <strong>${name}</strong><br>
-            المقاس: <strong>${size}</strong><br>
-            السعر: <strong>${price} د.ع</strong>
+            ${imgHtml}
+            <div style="text-align: right;">
+                المنتج: <strong>${name}</strong><br>
+                المقاس: <strong>${size}</strong><br>
+                السعر: <strong>${price} د.ع</strong>
+            </div>
         `;
     }
     document.getElementById('order-form-overlay').classList.add('active');
@@ -311,6 +399,7 @@ function submitOrder(event) {
 
     setTimeout(() => {
         sendWhatsAppDetailed(
+            currentOrderDetails.id,
             currentOrderDetails.name, 
             currentOrderDetails.price, 
             currentOrderDetails.size, 
@@ -324,22 +413,29 @@ function submitOrder(event) {
     }, 1500);
 }
 
-function sendWhatsAppDetailed(productName, price, size, customerInfo) {
-    const message = `*طلب جديد من متجر حيرة* ✨
-    
-🛍️ *تفاصيل الطلب*
-المنتج: ${productName}
-السعر: ${price} د.ع
-المقاس: ${size}
+function sendWhatsAppDetailed(productId, productName, price, size, customerInfo) {
+    let baseUrl = window.location.origin;
+    // Generate the path to the image as required by the user
+    let imageLink = `https://yourdomain.com/images/${productId}.jpg`;
+    if (window.location.hostname !== '' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        // If domain is known, use real domain instead of placeholder
+        imageLink = `${baseUrl}/images/${productId}.jpg`;
+    }
 
-👤 *بيانات العميل*
-الاسم: ${customerInfo.name}
-الموبايل: ${customerInfo.phone}
-المحافظة: ${customerInfo.gov}
-العنوان: ${customerInfo.address}
-أقرب نقطة دالة: ${customerInfo.landmark}
+    const message = `طلب جديد:
+- اسم المنتج: ${productName}
+- السعر: ${price} د.ع
+- القياس المختار: ${size}
 
-أرجو تأكيد الطلب، شكراً لكم!`;
+معلومات الزبون:
+- الاسم: ${customerInfo.name}
+- رقم الهاتف: ${customerInfo.phone}
+- المحافظة: ${customerInfo.gov}
+- العنوان: ${customerInfo.address} - ${customerInfo.landmark}
+
+صورة المنتج:
+${imageLink}`;
+
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');

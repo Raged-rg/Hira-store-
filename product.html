@@ -25,7 +25,12 @@
                 <h1><span class="brand-font-ar">حــــيرة</span> <span style="color: var(--matte-gold); margin: 0 10px;">|</span> <span class="brand-font">Hira</span></h1>
             </a>
         </div>
-        <div class="header-left"></div>
+        <div class="header-left" style="display: flex; gap: 15px; align-items: center;">
+            <button id="cart-btn" class="cart-icon-btn" onclick="openCartModal()">
+                <i class="fa fa-shopping-cart"></i>
+                <span id="cart-badge" class="cart-badge">0</span>
+            </button>
+        </div>
     </header>
 
     <!-- Product Detail Container -->

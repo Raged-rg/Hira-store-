@@ -75,8 +75,9 @@ function renderProducts(productsToRender) {
         const card = document.createElement('div');
         card.className = 'product-card';
         card.innerHTML = `
-            <div class="product-image-container" onclick="openProductModal('${product.id}')" style="cursor:pointer">
-                <img src="${product.image}" alt="${product.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/400x600?text=لا+توجد+صورة'">
+            <article class="product-card" id="product-${product.id}" onclick="openProductModal('${product.id}')">
+            <div class="product-image-container">
+                <img src="${product.image}" loading="lazy" alt="${product.name}" class="product-img" onerror="this.src='https://via.placeholder.com/400x600?text=لا+توجد+صورة'">
                 <button class="favorite-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, '${product.id}', this)">
                     <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
                 </button>
@@ -167,6 +168,18 @@ function addToCartDetail(id, name, price, image) {
     
     const size = selectedDetailSize;
     pushToCart(id, name, price, size, image);
+    triggerCardPop(id);
+}
+
+// --- Animation Core --- //
+function triggerCardPop(id) {
+    const card = document.getElementById(`product-${id}`);
+    if (card) {
+        card.classList.remove('tap-pop');
+        // trigger reflow
+        void card.offsetWidth;
+        card.classList.add('tap-pop');
+    }
 }
 
 // --- Shared Functions ---
@@ -201,6 +214,7 @@ function addToCart(event, id, name, price, image) {
     }
 
     pushToCart(id, name, price, size, image);
+    triggerCardPop(id);
     
     // Close modal if triggered from Product Lightbox modal
     if(document.getElementById('product-modal-overlay') && document.getElementById('product-modal-overlay').classList.contains('active')) {
@@ -219,7 +233,7 @@ function pushToCart(id, name, price, size, image) {
     }
     
     saveCart();
-    showCustomAlert("تمت الإضافة إلى السلة بنجاح!", "", "موافق", true);
+    showToast("تمت الإضافة إلى السلة", true);
 }
 
 function toggleFavorite(event, id, btnElement) {
@@ -234,11 +248,14 @@ function toggleFavorite(event, id, btnElement) {
         btnElement.classList.remove('active');
         icon.classList.remove('fa-solid');
         icon.classList.add('fa-regular');
+        showToast("تمت الإزالة من المفضلة");
     } else {
         favorites.push(id.toString());
         btnElement.classList.add('active');
         icon.classList.remove('fa-regular');
         icon.classList.add('fa-solid');
+        showToast("تمت الإضافة للمفضلة", true);
+        triggerCardPop(id);
     }
     localStorage.setItem('hira_favorites', JSON.stringify(favorites));
     updateFavCounter();
@@ -283,7 +300,7 @@ function renderFavItems() {
 
         container.innerHTML += `
             <div class="cart-item" id="fav-row-${product.id}">
-                <img src="${product.image}" class="cart-item-img" onclick="closeFavModal(); setTimeout(() => openProductModal('${product.id}'), 100);" style="cursor:pointer;">
+                <img src="${product.image}" loading="lazy" class="cart-item-img" onclick="closeFavModal(); setTimeout(() => openProductModal('${product.id}'), 100);" style="cursor:pointer;">
                 <div class="cart-item-details">
                     <div class="cart-item-title">${product.name}</div>
                     <div class="cart-item-price">${product.price} د.ع</div>
@@ -385,7 +402,7 @@ function renderCartItems() {
         total += item.price * item.quantity;
         container.innerHTML += `
             <div class="cart-item">
-                <img src="${item.image}" class="cart-item-img">
+                <img src="${item.image}" loading="lazy" class="cart-item-img">
                 <div class="cart-item-details">
                     <div class="cart-item-title">${item.name}</div>
                     <div class="cart-item-price">${item.price} د.ع</div>
@@ -448,6 +465,11 @@ function injectModals() {
     if (document.getElementById('order-form-overlay')) return; // Already injected
     
     const modalsHTML = `
+    <!-- Toast Message Component -->
+    <div id="toast-container" class="toast-message">
+        <i class="fa fa-check-circle" id="toast-icon"></i> <span id="toast-text"></span>
+    </div>
+
     <!-- Custom Alert Overlay -->
     <div id="custom-alert-overlay" class="modal-overlay" onclick="closeCustomAlert()">
         <div class="modal-content custom-alert-content" onclick="event.stopPropagation()">
@@ -576,7 +598,7 @@ function openProductModal(productId) {
     
     modalBody.innerHTML = `
         <div class="product-modal-image">
-           <img src="${product.image}" alt="${product.name}">
+           <img src="${product.image}" loading="lazy" alt="${product.name}">
         </div>
         <div class="product-modal-info">
             <h2>${product.name}</h2>
@@ -692,7 +714,34 @@ function sendWhatsAppDetailed(customerInfo) {
     window.open(whatsappUrl, '_blank');
 }
 
-// --- Custom Alert System --- //
+// --- Costum Alert System & Toast --- //
+
+let toastTimeout;
+function showToast(message, isSuccess = false) {
+    const toast = document.getElementById('toast-container');
+    const toastText = document.getElementById('toast-text');
+    const icon = document.getElementById('toast-icon');
+    
+    if (toast && toastText) {
+        toastText.innerText = message;
+        
+        if (isSuccess) {
+            icon.className = 'fa fa-check-circle';
+            icon.style.color = '#25D366';
+        } else {
+            icon.className = 'fa fa-info-circle';
+            icon.style.color = '#fff';
+        }
+        
+        toast.classList.add('show');
+        
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+}
+
 function showCustomAlert(message, title = "", buttonText = "موافق", isSuccess = false) {
     const msgEl = document.getElementById('custom-alert-message');
     const titleEl = document.getElementById('custom-alert-title');

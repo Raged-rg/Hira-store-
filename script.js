@@ -8,6 +8,16 @@ document.addEventListener('DOMContentLoaded', () => {
     setupMobileScrollHeader();
     updateCartCounter();
     updateFavCounter();
+
+    // ESC key to close active modals
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                modal.classList.remove('active');
+            });
+            document.body.style.overflow = '';
+        }
+    });
 });
 
 function initPage() {
@@ -151,7 +161,7 @@ function selectSizeDetail(btnElement) {
 
 function addToCartDetail(id, name, price, image) {
     if (!selectedDetailSize) {
-        alert("الرجاء اختيار المقاس أولاً.");
+        showCustomAlert("رجاءً يرجى اختيار القياس قبل المتابعة", "اختار القياس", "حسنًا");
         return;
     }
     
@@ -186,7 +196,7 @@ function addToCart(event, id, name, price, image) {
     }
 
     if (!size) {
-        alert("الرجاء اختيار المقاس أولاً.");
+        showCustomAlert("رجاءً يرجى اختيار القياس قبل المتابعة", "اختار القياس", "حسنًا");
         return;
     }
 
@@ -209,7 +219,7 @@ function pushToCart(id, name, price, size, image) {
     }
     
     saveCart();
-    alert("تمت الإضافة إلى السلة بنجاح!");
+    showCustomAlert("تمت الإضافة إلى السلة بنجاح!", "", "موافق", true);
 }
 
 function toggleFavorite(event, id, btnElement) {
@@ -299,7 +309,7 @@ function addFromFav(id, name, price, image) {
     const selectedBtn = selectorContainer.querySelector('.selected');
     
     if (!selectedBtn) {
-        alert("الرجاء اختيار المقاس أولاً.");
+        showCustomAlert("رجاءً يرجى اختيار القياس قبل المتابعة", "اختار القياس", "حسنًا");
         return;
     }
     
@@ -412,7 +422,7 @@ function removeFromCart(index) {
 
 function openCheckoutFromCart() {
     if (hira_cart.length === 0) {
-        alert("السلة فارغة.");
+        showCustomAlert("السلة فارغة.");
         return;
     }
     closeCartModal();
@@ -438,6 +448,15 @@ function injectModals() {
     if (document.getElementById('order-form-overlay')) return; // Already injected
     
     const modalsHTML = `
+    <!-- Custom Alert Overlay -->
+    <div id="custom-alert-overlay" class="modal-overlay" onclick="closeCustomAlert()">
+        <div class="modal-content custom-alert-content" onclick="event.stopPropagation()">
+            <h3 id="custom-alert-title" class="custom-alert-title" style="display:none;"></h3>
+            <div class="custom-alert-icon" id="custom-alert-icon" style="display:none;"></div>
+            <p id="custom-alert-message" class="custom-alert-message"></p>
+            <button id="custom-alert-btn" class="btn-primary custom-alert-btn" onclick="closeCustomAlert()">موافق</button>
+        </div>
+    </div>
     <!-- Favorites Modal -->
     <div id="fav-modal-overlay" class="modal-overlay" onclick="closeFavModal(event)">
         <div class="cart-modal-content modal-content" onclick="event.stopPropagation()">
@@ -601,7 +620,7 @@ function submitOrder(event) {
     event.preventDefault();
     
     if (hira_cart.length === 0) {
-        alert("السلة فارغة. عد للتسوق أولاً.");
+        showCustomAlert("السلة فارغة. عد للتسوق أولاً.");
         return;
     }
     
@@ -612,7 +631,7 @@ function submitOrder(event) {
     const landmark = document.getElementById('order-landmark').value;
 
     if (!name || !phone || !gov || !address || !landmark) {
-        alert("الرجاء ملء جميع الحقول المطلوبة.");
+        showCustomAlert("الرجاء ملء جميع الحقول المطلوبة.");
         return;
     }
 
@@ -671,4 +690,41 @@ function sendWhatsAppDetailed(customerInfo) {
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
+}
+
+// --- Custom Alert System --- //
+function showCustomAlert(message, title = "", buttonText = "موافق", isSuccess = false) {
+    const msgEl = document.getElementById('custom-alert-message');
+    const titleEl = document.getElementById('custom-alert-title');
+    const btnEl = document.getElementById('custom-alert-btn');
+    const iconEl = document.getElementById('custom-alert-icon');
+    
+    if (msgEl) {
+        msgEl.innerText = message;
+        
+        if (title) {
+            titleEl.innerText = title;
+            titleEl.style.display = 'block';
+        } else {
+            titleEl.style.display = 'none';
+        }
+        
+        if (btnEl) btnEl.innerText = buttonText;
+        
+        if (isSuccess && iconEl) {
+            iconEl.innerHTML = '<i class="fa fa-check-circle" style="color: #25D366; font-size: 40px; margin-bottom: 10px;"></i>';
+            iconEl.style.display = 'block';
+        } else {
+            if (iconEl) iconEl.style.display = 'none';
+        }
+        
+        document.getElementById('custom-alert-overlay').classList.add('active');
+    }
+}
+
+function closeCustomAlert() {
+    const alertModal = document.getElementById('custom-alert-overlay');
+    if (alertModal) {
+        alertModal.classList.remove('active');
+    }
 }

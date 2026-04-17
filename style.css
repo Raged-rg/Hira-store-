@@ -198,7 +198,7 @@ header {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 30px;
   margin-bottom: 80px;
 }
@@ -228,17 +228,24 @@ header {
 .product-image-container {
   position: relative;
   overflow: hidden;
-  height: 380px;
+  aspect-ratio: 3/4;
   background: var(--light-grey);
+  padding: 10px; /* Frame around image */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .product-image-container img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: top center;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
   transition: transform 0.5s ease;
 }
 .product-card:hover .product-image-container img {
-  transform: scale(1.05);
+  transform: scale(1.03);
 }
 
 .favorite-btn {
@@ -852,8 +859,8 @@ header {
 
   /* 3. Product Cards - High-End Minimal Grid */
   .grid {
-    grid-template-columns: 1fr;
-    gap: 20px; /* Clean, breathable spacing */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px; /* Clean, breathable spacing */
     margin-bottom: 50px;
     padding: 0; /* Remove extra padding to balance margins */
   }
@@ -864,7 +871,7 @@ header {
   }
 
   /* Increase image size for more focus */
-  .product-image-container { height: 260px; border-radius: 8px 8px 0 0; }
+  .product-image-container { height: auto; aspect-ratio: 3/4; border-radius: 8px 8px 0 0; padding: 6px; }
   
   .product-info { padding: 12px 8px; }
   
@@ -876,7 +883,7 @@ header {
   .product-price { font-size: 14px; font-weight: 700; color: var(--matte-gold); margin-bottom: 12px; }
   
   /* Size Selector (Clean Circular Design) */
-  .size-selector { gap: 6px; margin-bottom: 12px; }
+  .size-selector { flex-wrap: wrap; justify-content: center; gap: 4px; margin-bottom: 12px; }
   .size-selector button { 
     width: 28px; height: 28px; font-size: 11px; 
   }

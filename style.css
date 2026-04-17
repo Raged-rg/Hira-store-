@@ -28,6 +28,7 @@ body {
   color: var(--black);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 /* Typography Mix */
@@ -103,7 +104,9 @@ header {
 
 .search-container {
   position: relative;
-  width: 300px;
+  width: 100%;
+  max-width: 350px;
+  margin: 0 auto;
 }
 .search-container input {
   width: 100%;
@@ -208,6 +211,14 @@ header {
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
   position: relative;
   animation: fadeInScale 0.6s ease-out backwards;
+}
+.product-card.tap-pop {
+  animation: tapPop 0.35s ease-in-out;
+}
+@keyframes tapPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
 }
 .product-card:hover {
   transform: translateY(-4px);
@@ -815,12 +826,12 @@ header {
   .header-center { justify-content: center; }
   .header-left { justify-content: flex-end; }
   
-  .header-right img { max-height: 48px !important; }
-  .logo h1 { font-size: 18px; margin: 0; }
-  .logo h1 span { font-size: 16px; margin: 0 5px; }
+  .header-right img { max-height: 35px !important; }
+  .logo h1 { font-size: 16px; margin: 0; }
+  .logo h1 span { font-size: 16px; margin: 0; }
 
   /* Minimal Luxury Search */
-  .search-container { width: 130px; }
+  .search-container { width: 100%; max-width: none; }
   .search-container input {
     padding: 6px 12px;
     padding-right: 28px;
@@ -841,8 +852,8 @@ header {
 
   /* 3. Product Cards - High-End Minimal Grid */
   .grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px; /* Clean, breathable spacing */
+    grid-template-columns: 1fr;
+    gap: 20px; /* Clean, breathable spacing */
     margin-bottom: 50px;
     padding: 0; /* Remove extra padding to balance margins */
   }
@@ -934,6 +945,7 @@ header {
     font-size: 18px;
     margin-bottom: 10px;
   }
+
   .product-modal-info .desc {
     font-size: 13px;
     margin-bottom: 15px;
@@ -966,5 +978,37 @@ header {
     font-size: 13px;
     margin-bottom: 15px;
   }
+}
+
+/* Toast Messages */
+.toast-message {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 14px 28px;
+  border-radius: 30px;
+  font-family: var(--font-arabic);
+  font-size: 15px;
+  opacity: 0;
+  visibility: hidden;
+  z-index: 10000;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+.toast-message.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  visibility: visible;
+}
+.toast-message i {
+  color: #25D366;
+  font-size: 18px;
 }
 

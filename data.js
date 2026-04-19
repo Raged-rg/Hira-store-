@@ -42,7 +42,16 @@ const hiraProducts = [
         image: "Images/6.jpg",
         description: "تصميم بشت مريح وجذاب مناسب لكل الأوقات يعطي مظهراً راقياً."
     },
- ];
+
+
+    {
+        id: "7",
+        name: "فستان رمضاني",
+        price: "75750",
+        image: "Images/7.jpg",
+        description: ""
+    },
+];
 
 // يمكنك إضافة أي منتج جديد بنفس النمط أعلاه
 // تأكد من وضع .jpg في نهاية اسم الصورة، مثال: Images/4.jpg

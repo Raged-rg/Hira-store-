@@ -445,7 +445,7 @@
             loadProducts();
             
             // Password input enter key
-            document.getElementById('admin-pass').addEventListener('keypress', (e) => {
+            document.getElementById('admin-pass').addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') checkPassword();
             });
 
@@ -482,9 +482,11 @@
 
         // --- Auth Logic ---
         function checkPassword() {
-            const pass = document.getElementById('admin-pass').value;
+            const pass = document.getElementById('admin-pass').value.trim();
             const error = document.getElementById('login-error');
             
+            console.log("Attempting login with password..."); // Debug log
+
             if (pass === ADMIN_PASSWORD) {
                 document.getElementById('login-screen').style.opacity = '0';
                 setTimeout(() => {
@@ -531,12 +533,15 @@
             products.forEach(p => {
                 const card = document.createElement('div');
                 card.className = 'product-card';
+                // Safety check for sizes array
+                const sizesList = (p.sizes && Array.isArray(p.sizes)) ? p.sizes.join(', ') : 'غير محدد';
+                
                 card.innerHTML = `
                     <img src="${p.image}" class="product-img" onerror="this.src='https://via.placeholder.com/300x400?text=No+Image'">
                     <div class="product-info">
                         <div class="product-name">${p.name}</div>
                         <div class="product-price">${Number(p.price).toLocaleString()} د.ع</div>
-                        <div class="product-sizes">المقاسات: ${p.sizes.join(', ')}</div>
+                        <div class="product-sizes">المقاسات: ${sizesList}</div>
                     </div>
                     <div class="card-actions">
                         <button class="btn btn-secondary btn-sm" onclick="editProduct('${p.id}')"><i class="fa fa-edit"></i> تعديل</button>
@@ -577,3 +582,102 @@
                 notify("تم تحديث المنتج بنجاح", "success");
             } else {
                 if(products.find(p => p.id === id)) {
+                    notify("كود المنتج موجود مسبقاً!", "error");
+                    return;
+                }
+                products.push(productData);
+                notify("تم إضافة المنتج بنجاح", "success");
+            }
+
+            saveToStorage();
+            renderProducts();
+            resetForm();
+        }
+
+        function editProduct(id) {
+            const p = products.find(prod => prod.id === id);
+            if (!p) return;
+
+            document.getElementById('prod-id').value = p.id;
+            document.getElementById('prod-name').value = p.name;
+            document.getElementById('prod-price').value = p.price;
+            displayPreview(p.image);
+            document.getElementById('prod-sizes').value = p.sizes.join(', ');
+            document.getElementById('prod-desc').value = p.description || "";
+            
+            document.getElementById('edit-id').value = p.id;
+            document.getElementById('form-title').innerHTML = '<i class="fa fa-edit"></i> تعديل المنتج';
+            document.getElementById('save-btn').innerHTML = '<i class="fa fa-check"></i> تحديث التغييرات';
+            document.getElementById('cancel-btn').style.display = 'block';
+            
+            isEditing = true;
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        function displayPreview(src) {
+            const preview = document.getElementById('prod-preview');
+            const container = document.getElementById('prod-preview-container');
+            const text = document.getElementById('upload-text');
+            const icon = document.querySelector('#upload-box i');
+            const clearBtn = document.getElementById('clear-img');
+
+            preview.src = src;
+            container.style.display = 'block';
+            text.style.display = 'none';
+            if(icon) icon.style.display = 'none';
+            clearBtn.style.display = 'inline-block';
+        }
+
+        function clearImage(event) {
+            if(event) event.stopPropagation();
+            document.getElementById('prod-preview').src = '';
+            document.getElementById('prod-preview-container').style.display = 'none';
+            document.getElementById('upload-text').style.display = 'block';
+            const icon = document.querySelector('#upload-box i');
+            if(icon) icon.style.display = 'block';
+            document.getElementById('clear-img').style.display = 'none';
+            document.getElementById('prod-image-file').value = '';
+        }
+
+        function deleteProduct(id) {
+            if (confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
+                products = products.filter(p => p.id !== id);
+                saveToStorage();
+                renderProducts();
+                notify("تم حذف المنتج", "success");
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('product-form').reset();
+            clearImage();
+            document.getElementById('edit-id').value = '';
+            document.getElementById('form-title').innerHTML = '<i class="fa fa-plus-circle"></i> إضافة منتج جديد';
+            document.getElementById('save-btn').innerHTML = '<i class="fa fa-save"></i> حفظ المنتج';
+            document.getElementById('cancel-btn').style.display = 'none';
+            isEditing = false;
+        }
+
+        function exportData() {
+            const dataString = `const hiraProducts = ${JSON.stringify(products, null, 4)};`;
+            navigator.clipboard.writeText(dataString).then(() => {
+                notify("تم نسخ البيانات لملف data.js بنجاح", "success");
+            }).catch(err => {
+                console.error("Copy failed", err);
+                notify("فشل النسخ تلقائياً", "error");
+            });
+        }
+
+        function notify(msg, type) {
+            const n = document.getElementById('notification');
+            n.textContent = msg;
+            n.style.display = 'block';
+            n.style.background = type === 'success' ? 'var(--success-green)' : 'var(--error-red)';
+            
+            setTimeout(() => {
+                n.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

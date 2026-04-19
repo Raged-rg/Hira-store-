@@ -193,27 +193,73 @@
             margin-bottom: 20px;
         }
 
-        .form-group {
+        .form-group input:focus { border-color: var(--primary-gold); }
+
+        /* --- Image Upload Upgrade --- */
+        .upload-container {
+            border: 2px dashed #444;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            background: #252525;
+            min-height: 150px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
         }
 
-        .form-group label {
-            font-size: 14px;
-            color: var(--text-dim);
+        .upload-container:hover {
+            border-color: var(--primary-gold);
+            background: #2a2a2a;
         }
 
-        .form-group input, .form-group textarea {
-            padding: 10px;
-            background: #252525;
-            border: 1px solid #444;
+        .upload-container i {
+            font-size: 30px;
+            color: var(--primary-gold);
+        }
+
+        .upload-container input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        #prod-preview-container {
+            width: 100%;
+            max-width: 200px;
+            height: 150px;
+            display: none;
             border-radius: 6px;
-            color: #fff;
-            outline: none;
+            overflow: hidden;
+            margin-top: 10px;
+            border: 1px solid #333;
         }
 
-        .form-group input:focus { border-color: var(--primary-gold); }
+        #prod-preview-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .clear-img-btn {
+            background: var(--error-red);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            display: none;
+        }
 
         /* --- Product Grid --- */
         .product-grid {
@@ -346,9 +392,17 @@
                         <label>السعر</label>
                         <input type="text" id="prod-price" placeholder="مثال: 45000" required>
                     </div>
-                    <div class="form-group">
-                        <label>مسار الصورة</label>
-                        <input type="text" id="prod-image" placeholder="مثال: Images/1.jpg" required>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>صورة المنتج</label>
+                        <div class="upload-container" id="upload-box">
+                            <i class="fa fa-cloud-upload-alt"></i>
+                            <span id="upload-text">اختر صورة أو اسحبها هنا</span>
+                            <div id="prod-preview-container">
+                                <img src="" id="prod-preview">
+                            </div>
+                            <input type="file" id="prod-image-file" accept="image/*">
+                            <button type="button" class="clear-img-btn" id="clear-img" onclick="clearImage(event)">حذف الصورة</button>
+                        </div>
                     </div>
                 </div>
                 <div class="form-grid">
@@ -399,6 +453,21 @@
             document.getElementById('product-form').addEventListener('submit', (e) => {
                 e.preventDefault();
                 saveProduct();
+            });
+
+            // Image Upload Logic
+            document.getElementById('prod-image-file').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 2 * 1024 * 1024) { // 2MB Limit Warning
+                        notify("تحذير: حجم الصورة كبير، قد يؤثر ذلك على الأداء", "error");
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        displayPreview(event.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
             });
 
             // Prevent basic console/F12 actions
@@ -482,9 +551,14 @@
             const id = document.getElementById('prod-id').value;
             const name = document.getElementById('prod-name').value;
             const price = document.getElementById('prod-price').value;
-            const image = document.getElementById('prod-image').value;
+            const image = document.getElementById('prod-preview').src;
             const sizesStr = document.getElementById('prod-sizes').value;
             const desc = document.getElementById('prod-desc').value;
+
+            if (!image || image.includes('admin.html') || image === window.location.href) {
+                notify("يرجى اختيار صورة للمنتج", "error");
+                return;
+            }
 
             const sizes = sizesStr.split(',').map(s => s.trim()).filter(s => s !== "");
 
@@ -502,78 +576,4 @@
                 if (index !== -1) products[index] = productData;
                 notify("تم تحديث المنتج بنجاح", "success");
             } else {
-                // Check if ID exists
                 if(products.find(p => p.id === id)) {
-                    notify("كود المنتج موجود مسبقاً!", "error");
-                    return;
-                }
-                products.push(productData);
-                notify("تم إضافة المنتج بنجاح", "success");
-            }
-
-            saveToStorage();
-            renderProducts();
-            resetForm();
-        }
-
-        function editProduct(id) {
-            const p = products.find(prod => prod.id === id);
-            if (!p) return;
-
-            document.getElementById('prod-id').value = p.id;
-            document.getElementById('prod-name').value = p.name;
-            document.getElementById('prod-price').value = p.price;
-            document.getElementById('prod-image').value = p.image;
-            document.getElementById('prod-sizes').value = p.sizes.join(', ');
-            document.getElementById('prod-desc').value = p.description || "";
-            
-            document.getElementById('edit-id').value = p.id;
-            document.getElementById('form-title').innerHTML = '<i class="fa fa-edit"></i> تعديل المنتج';
-            document.getElementById('save-btn').innerHTML = '<i class="fa fa-check"></i> تحديث التغييرات';
-            document.getElementById('cancel-btn').style.display = 'block';
-            
-            isEditing = true;
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        }
-
-        function deleteProduct(id) {
-            if (confirm("هل أنت متأكد من حذف هذا المنتج؟")) {
-                products = products.filter(p => p.id !== id);
-                saveToStorage();
-                renderProducts();
-                notify("تم حذف المنتج", "success");
-            }
-        }
-
-        function resetForm() {
-            document.getElementById('product-form').reset();
-            document.getElementById('edit-id').value = '';
-            document.getElementById('form-title').innerHTML = '<i class="fa fa-plus-circle"></i> إضافة منتج جديد';
-            document.getElementById('save-btn').innerHTML = '<i class="fa fa-save"></i> حفظ المنتج';
-            document.getElementById('cancel-btn').style.display = 'none';
-            isEditing = false;
-        }
-
-        function exportData() {
-            const dataString = `const hiraProducts = ${JSON.stringify(products, null, 4)};`;
-            navigator.clipboard.writeText(dataString).then(() => {
-                notify("تم نسخ البيانات لملف data.js بنجاح", "success");
-            }).catch(err => {
-                console.error("Copy failed", err);
-                notify("فشل النسخ تلقائياً", "error");
-            });
-        }
-
-        function notify(msg, type) {
-            const n = document.getElementById('notification');
-            n.textContent = msg;
-            n.style.display = 'block';
-            n.style.background = type === 'success' ? 'var(--success-green)' : 'var(--error-red)';
-            
-            setTimeout(() => {
-                n.style.display = 'none';
-            }, 3000);
-        }
-    </script>
-</body>
-</html>

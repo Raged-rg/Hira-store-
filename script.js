@@ -77,7 +77,9 @@ function renderProducts(productsToRender) {
         card.innerHTML = `
             <article class="product-card" id="product-${product.id}" onclick="openProductModal('${product.id}')">
             <div class="product-image-container">
-                <img src="${product.image}" loading="lazy" alt="${product.name}" class="product-img" onerror="this.src='https://via.placeholder.com/400x600?text=لا+توجد+صورة'">
+                <div class="product-img-wrapper">
+                    <img src="${product.image}" loading="lazy" alt="${product.name}" class="product-img" style="object-position: ${product.imagePositionX || 50}% ${product.imagePositionY || 50}%; transform: scale(${product.imageScale || 1});" onerror="this.src='https://via.placeholder.com/400x600?text=لا+توجد+صورة'">
+                </div>
                 <button class="favorite-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, '${product.id}', this)">
                     <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
                 </button>
@@ -125,8 +127,8 @@ function renderProductDetail(productId) {
     }
 
     container.innerHTML = `
-        <div class="product-detail-image">
-           <img src="${product.image}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/600x800?text=لا+توجد+صورة'">
+        <div class="product-detail-image" style="overflow: hidden;">
+           <img src="${product.image}" alt="${product.name}" style="object-position: ${product.imagePositionX || 50}% ${product.imagePositionY || 50}%; transform: scale(${product.imageScale || 1});" onerror="this.src='https://via.placeholder.com/600x800?text=لا+توجد+صورة'">
         </div>
         <div class="product-detail-info">
             <h1>${product.name}</h1>
@@ -300,7 +302,9 @@ function renderFavItems() {
 
         container.innerHTML += `
             <div class="cart-item" id="fav-row-${product.id}">
-                <img src="${product.image}" loading="lazy" class="cart-item-img" onclick="closeFavModal(); setTimeout(() => openProductModal('${product.id}'), 100);" style="cursor:pointer;">
+                <div style="width: 70px; height: 90px; overflow: hidden; border-radius: 6px; flex-shrink: 0; cursor:pointer;" onclick="closeFavModal(); setTimeout(() => openProductModal('${product.id}'), 100);">
+                    <img src="${product.image}" loading="lazy" class="cart-item-img" style="width: 100%; height: 100%; margin: 0; object-position: ${product.imagePositionX || 50}% ${product.imagePositionY || 50}%; transform: scale(${product.imageScale || 1});">
+                </div>
                 <div class="cart-item-details">
                     <div class="cart-item-title">${product.name}</div>
                     <div class="cart-item-price">${product.price} د.ع</div>
@@ -400,9 +404,17 @@ function renderCartItems() {
     let total = 0;
     hira_cart.forEach((item, index) => {
         total += item.price * item.quantity;
+        
+        const product = hiraProducts.find(p => p.id.toString() === item.id.toString());
+        const imgPosX = product ? (product.imagePositionX || 50) : 50;
+        const imgPosY = product ? (product.imagePositionY || 50) : 50;
+        const imgScale = product ? (product.imageScale || 1) : 1;
+
         container.innerHTML += `
             <div class="cart-item">
-                <img src="${item.image}" loading="lazy" class="cart-item-img">
+                <div style="width: 70px; height: 90px; overflow: hidden; border-radius: 6px; flex-shrink: 0;">
+                    <img src="${item.image}" loading="lazy" class="cart-item-img" style="width: 100%; height: 100%; margin: 0; object-position: ${imgPosX}% ${imgPosY}%; transform: scale(${imgScale});">
+                </div>
                 <div class="cart-item-details">
                     <div class="cart-item-title">${item.name}</div>
                     <div class="cart-item-price">${item.price} د.ع</div>
@@ -597,8 +609,8 @@ function openProductModal(productId) {
     if (!modalBody) return;
     
     modalBody.innerHTML = `
-        <div class="product-modal-image">
-           <img src="${product.image}" loading="lazy" alt="${product.name}">
+        <div class="product-modal-image" style="overflow: hidden;">
+           <img src="${product.image}" loading="lazy" alt="${product.name}" style="object-position: ${product.imagePositionX || 50}% ${product.imagePositionY || 50}%; transform: scale(${product.imageScale || 1});">
         </div>
         <div class="product-modal-info">
             <h2>${product.name}</h2>

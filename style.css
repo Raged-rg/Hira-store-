@@ -36,10 +36,9 @@ h1, h2, h3, .brand-font {
   font-family: var(--font-english);
 }
 .brand-font-ar {
-  font-family: 'Reem Kufi', sans-serif;
-  font-weight: 700;
+  font-family: var(--font-arabic);
+  font-weight: 500;
   font-size: 28px;
-  letter-spacing: 0.5px;
 }
 
 a {

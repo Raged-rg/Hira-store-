@@ -524,14 +524,36 @@ function injectModals() {
         </div>
     </div>
 
-    <!-- Lightbox Product Modal -->
-    <div id="product-modal-overlay" class="modal-overlay" onclick="closeProductModal(event)">
-        <div class="modal-content product-modal-content" onclick="event.stopPropagation()">
-            <button class="modal-close" onclick="closeProductModal()"><i class="fa fa-times"></i></button>
-            <div id="product-modal-body">
-                <!-- Content injected dynamically -->
-            </div>
+    <!-- Advanced Product Modal -->
+    <div id="productModal" class="modal-overlay" onclick="closeProductModal(event)">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <span id="closeModal" onclick="closeProductModal()">&times;</span>
+
+        <!-- SLIDER -->
+        <div class="slider-container">
+          <button id="prevBtn" onclick="prevSlide()">&#10094;</button>
+          <img id="sliderImage" />
+          <button id="nextBtn" onclick="nextSlide()">&#10095;</button>
         </div>
+
+        <!-- THUMBNAILS -->
+        <div id="thumbnails"></div>
+
+        <h2 id="modalName"></h2>
+        <p id="modalPrice"></p>
+        <p id="modalDescription"></p>
+
+        <!-- SIZE -->
+        <div class="size-guide-text" style="font-size: 13px; color: #888; text-align: right; margin-bottom: 5px;">اختاري المقاس (طول العباية بالسم):</div>
+        <select id="sizeSelect"></select>
+
+        <button id="addToCartBtn" onclick="addToCartFromModal()">أضف إلى السلة</button>
+      </div>
+    </div>
+
+    <!-- ZOOM VIEW -->
+    <div id="zoomOverlay" onclick="closeZoom()">
+      <img id="zoomedImage">
     </div>
 
     <!-- Order Form Modal -->
@@ -601,44 +623,155 @@ function injectModals() {
     document.body.appendChild(container);
 }
 
+let currentIndex = 0;
+let currentImages = [];
+
+function initSlider(images){
+  currentImages = images.slice(0,4);
+  currentIndex = 0;
+  updateSlider();
+  renderThumbnails();
+}
+
+function updateSlider(){
+  if(currentImages.length > 0) {
+      document.getElementById("sliderImage").src = currentImages[currentIndex];
+      // update active thumbnail class
+      let container = document.getElementById("thumbnails");
+      if(container) {
+          Array.from(container.children).forEach((child, idx) => {
+              if(idx === currentIndex) child.classList.add("active");
+              else child.classList.remove("active");
+          });
+      }
+  } else {
+      document.getElementById("sliderImage").src = "https://via.placeholder.com/600x800?text=لا+توجد+صورة";
+  }
+}
+
+function nextSlide(){
+  if(currentImages.length === 0) return;
+  currentIndex = (currentIndex + 1) % currentImages.length;
+  updateSlider();
+}
+
+function prevSlide(){
+  if(currentImages.length === 0) return;
+  currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
+  updateSlider();
+}
+
+function renderThumbnails(){
+  let container = document.getElementById("thumbnails");
+  if(!container) return;
+  container.innerHTML = "";
+
+  currentImages.forEach((img, index)=>{
+    let t = document.createElement("img");
+    t.src = img;
+    if(index === currentIndex) t.classList.add("active");
+
+    t.onclick = () => {
+      currentIndex = index;
+      updateSlider();
+    };
+
+    container.appendChild(t);
+  });
+}
+
 function openProductModal(productId) {
     const product = hiraProducts.find(p => p.id.toString() === productId.toString());
     if (!product) return;
-
-    const modalBody = document.getElementById('product-modal-body');
-    if (!modalBody) return;
     
-    modalBody.innerHTML = `
-        <div class="product-modal-image" style="overflow: hidden;">
-           <img src="${product.image}" loading="lazy" alt="${product.name}" style="object-position: ${product.imagePositionX || 50}% ${product.imagePositionY || 50}%; transform: scale(${product.imageScale || 1});">
-        </div>
-        <div class="product-modal-info">
-            <h2>${product.name}</h2>
-            <div class="price">${product.price} د.ع</div>
-            <p class="desc">${product.description.replace(/\n/g, '<br>')}</p>
-            <div class="size-selector" id="modal-size-selector">
-                <button type="button" onclick="selectSize(event, this)">52</button>
-                <button type="button" onclick="selectSize(event, this)">54</button>
-                <button type="button" onclick="selectSize(event, this)">56</button>
-                <button type="button" onclick="selectSize(event, this)">58</button>
-                <button type="button" onclick="selectSize(event, this)">60</button>
-            </div>
-            <div class="size-guide-text" style="font-size: 13px; color: #888; text-align: center; margin-bottom: 20px;">القياسات بالأرقام وتمثل طول العباية بالسنتيمتر</div>
-            <button class="btn-primary" onclick="addToCart(event, '${product.id}', '${product.name}', '${product.price}', '${product.image}')">أضف إلى السلة</button>
-        </div>
-    `;
+    let images = [];
+    if(product.images && Array.isArray(product.images) && product.images.length > 0) {
+        images = product.images;
+    } else if (product.image) {
+        images = [product.image];
+    }
+    
+    initSlider(images);
 
-    document.getElementById('product-modal-overlay').classList.add('active');
+    document.getElementById("modalName").innerText = product.name;
+    document.getElementById("modalPrice").innerText = product.price + " د.ع";
+    document.getElementById("modalDescription").innerHTML = product.description.replace(/\n/g, '<br>');
+
+    let select = document.getElementById("sizeSelect");
+    select.innerHTML = "";
+
+    let sizesToUse = [];
+    if(product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0) {
+        sizesToUse = product.sizes;
+    } else {
+        sizesToUse = ["52", "54", "56", "58", "60"]; // Fallback for old data
+    }
+    
+    sizesToUse.forEach(size => {
+        let opt = document.createElement("option");
+        opt.value = size;
+        opt.textContent = size;
+        select.appendChild(opt);
+    });
+
+    window.currentProduct = product;
+
+    document.getElementById('productModal').classList.add('active');
     document.body.style.overflow = 'hidden'; 
+    
+    let startX = 0;
+    let slider = document.getElementById("sliderImage");
+    
+    let newSlider = slider.cloneNode(true);
+    slider.parentNode.replaceChild(newSlider, slider);
+    slider = newSlider;
+
+    slider.addEventListener("touchstart", e => {
+      startX = e.touches[0].clientX;
+    });
+
+    slider.addEventListener("touchend", e => {
+      let endX = e.changedTouches[0].clientX;
+      if(startX - endX > 50) nextSlide();
+      if(endX - startX > 50) prevSlide();
+    });
+    
+    slider.onclick = () => {
+        let zoomOverlay = document.getElementById("zoomOverlay");
+        let zoomImg = document.getElementById("zoomedImage");
+        if(currentImages.length > 0) {
+            zoomOverlay.style.display = "flex";
+            zoomImg.src = currentImages[currentIndex];
+        }
+    };
 }
 
 function closeProductModal(event) {
-    if (event && event.target !== event.currentTarget && !event.target.classList.contains('modal-close')) return;
-    const modal = document.getElementById('product-modal-overlay');
+    if (event && event.target !== event.currentTarget && event.target.id !== 'closeModal') return;
+    const modal = document.getElementById('productModal');
     if (modal) {
         modal.classList.remove('active');
         document.body.style.overflow = '';
     }
+}
+
+function closeZoom() {
+    document.getElementById("zoomOverlay").style.display = "none";
+}
+
+function addToCartFromModal() {
+    let size = document.getElementById("sizeSelect").value;
+    if (!size) {
+        showCustomAlert("رجاءً يرجى اختيار القياس قبل المتابعة", "اختار القياس", "حسنًا");
+        return;
+    }
+    
+    let product = window.currentProduct;
+    let img = (product.images && product.images.length > 0) ? product.images[0] : product.image;
+    
+    pushToCart(product.id, product.name, product.price, size, img);
+    triggerCardPop(product.id);
+    closeProductModal();
 }
 
 function closeOrderForm(event) {

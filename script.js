@@ -696,14 +696,32 @@ function sendWhatsAppDetailed(customerInfo) {
     let totalPrice = 0;
 
     hira_cart.forEach(item => {
-        let imageLink = new URL(item.image, window.location.href).href;
+        // 1. CLEAN IMAGE URL:
+        let imageUrl = item.image ? item.image.trim() : "";
+        
+        // 2. FORCE DIRECT LINK (IMGBB):
+        if (imageUrl.includes('ibb.co') && !imageUrl.includes('i.ibb.co')) {
+            imageUrl = imageUrl.replace('ibb.co', 'i.ibb.co');
+        }
+        
+        // 3. ENSURE CORRECT URL FORMAT:
+        if (imageUrl && !imageUrl.match(/\.(jpg|jpeg|png|webp)(\?.*)?$/i)) {
+            imageUrl += '.jpg';
+        }
+
+        try {
+            imageUrl = new URL(imageUrl, window.location.href).href;
+        } catch (e) {}
+
+        // 6. DEBUG LOG:
+        console.log("Final Image URL:", imageUrl);
+
         message += `
 * ${item.name}
   السعر: ${item.price} د.ع
   القياس: ${item.size}
   الكمية: ${item.quantity}
-  صورة:
-  ${imageLink}
+  الصورة: ${imageUrl}
 `;
         totalItems += item.quantity;
         totalPrice += item.price * item.quantity;

@@ -719,14 +719,14 @@ header.hide-on-scroll { transform: translateY(-110%); }
   .product-info h3 { font-size:13px; }
   .product-price  { font-size:13px; }
   .product-card-actions { padding:6px 10px 12px; }
-  .size-selector { gap:4px; margin-bottom:9px; }
-  .size-selector button { width:27px; height:27px; font-size:10px; }
+  .size-selector { gap:10px; margin-bottom:15px; }
+  .size-selector button { width:46px; height:46px; font-size:14px; border-radius:8px; }
   .btn-primary  { font-size:12px; padding:9px; }
   .btn-secondary{ font-size:12px; padding:8px; }
 
-  .slider-container { height:300px; }
-  .slider-nav-btn { width:30px; height:30px; font-size:12px; }
-  .thumbnail-item { width:46px; height:60px; }
+  .slider-container { height:360px; }
+  .slider-nav-btn { width:32px; height:32px; font-size:13px; }
+  .thumbnail-item { width:90px; height:110px; border-radius:8px; }
 
   .product-detail-container {
     flex-direction:column; padding:14px 12px 60px; gap:16px;
@@ -766,12 +766,12 @@ header.hide-on-scroll { transform: translateY(-110%); }
   #productModal .modal-images-part {
     width: 100%;
     flex: none;
-    gap: 12px;
+    gap: 18px;
   }
   #productModal .slider-container { 
-    height:420px; 
+    height:450px; 
     width: 100%; 
-    background: #f9f9f9; 
+    background: #fdfdfd; 
     border-radius: 12px;
     flex: none;
     margin-bottom: 0;

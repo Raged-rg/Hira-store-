@@ -324,6 +324,8 @@ function selectModalSize(btn, size) {
     Array.from(btn.parentElement.children).forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     document.getElementById('sizeSelect').value = size;
+    const display = document.getElementById('selectedSizeDisplay');
+    if (display) display.innerText = `(${size})`;
 }
 
 function addToCart(event, id, name, price, image) {
@@ -699,7 +701,9 @@ function openProductModal(productId) {
     // Sizes
     const selectContainer = document.getElementById('sizeSelectContainer');
     const hiddenInput = document.getElementById('sizeSelect');
+    const display = document.getElementById('selectedSizeDisplay');
     hiddenInput.value = ''; // reset
+    if (display) display.innerText = '';
     const sizesArr  = (product.sizes && product.sizes.length) ? product.sizes : ['52','54','56','58','60'];
     selectContainer.innerHTML = sizesArr.map(s => `<button type="button" onclick="selectModalSize(this, '${s}')">${s}</button>`).join('');
 
@@ -983,13 +987,21 @@ function injectModals() {
                 <h2 id="modalName"></h2>
                 <p id="modalPrice" class="modal-price"></p>
                 <p id="modalDescription" class="modal-desc"></p>
-                <div class="size-guide-text">اختاري القياس (طول العباية بالسم):</div>
-                <div id="sizeSelectContainer" class="size-selector modal-size-selector"></div>
-                <input type="hidden" id="sizeSelect" value="">
-                <button id="addToCartBtn" class="btn-primary" onclick="addToCartFromModal()">
-                    <i class="fa fa-shopping-cart" style="margin-left:8px;"></i>
-                    أضف إلى السلة
-                </button>
+                <div class="modal-size-section">
+                    <div class="size-header">
+                        <span class="size-label">اختاري القياس:</span>
+                        <span id="selectedSizeDisplay" class="selected-size-text"></span>
+                    </div>
+                    <div id="sizeSelectContainer" class="size-selector modal-size-selector"></div>
+                    <input type="hidden" id="sizeSelect" value="">
+                </div>
+                
+                <div class="modal-actions-sticky">
+                    <button id="addToCartBtn" class="btn-primary" onclick="addToCartFromModal()">
+                        <i class="fa fa-shopping-cart" style="margin-left:8px;"></i>
+                        أضف إلى السلة
+                    </button>
+                </div>
             </div>
         </div>
     </div>
